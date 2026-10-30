@@ -1,0 +1,15 @@
+version: 1
+tenant_id: local-demo
+region: local-demo
+model: yolo11n-pose.pt
+tracker: botsort.yaml
+confidence: 0.30
+image_size: 640
+cameras:
+  - id: front-door
+    site_id: site-001
+    source: "${CAMERA_FRONT_DOOR:-0}"
+    authorized: true
+    zones:
+      - id: demo-area
+        polygon: [[0.25, 0.20], [0.75, 0.20], [0.75, 0.90], [0.25, 0.90]]

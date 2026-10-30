@@ -1,0 +1,21 @@
+version: 1
+tenant_id: local-demo
+region: local-demo
+model: yolo11n-pose.pt
+tracker: botsort.yaml
+confidence: 0.30
+image_size: 640
+cameras:
+  - id: front-door
+    site_id: site-001
+    source: "${CAMERA_FRONT_DOOR:-0}"
+    authorized: true
+  - id: loading-area
+    site_id: site-001
+    source: "${CAMERA_LOADING_AREA}"
+    authorized: true
+    enabled: false
+    zones:
+      - id: dock-entrance
+        # Normalized x/y coordinates from 0 to 1. Adjust these points to your view.
+        polygon: [[0.10, 0.30], [0.48, 0.30], [0.48, 0.90], [0.10, 0.90]]

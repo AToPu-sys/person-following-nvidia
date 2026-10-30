@@ -1,0 +1,88 @@
+services:
+  camera-app:
+    build:
+      context: ..
+    restart: unless-stopped
+    env_file:
+      - ../.env.cameras
+    environment:
+      APP_HOST: 0.0.0.0
+      CAMERA_CONFIG: /app/cameras.yaml
+      EVENT_DB: /data/camera-events.sqlite3
+      EVENT_RETENTION_DAYS: ${EVENT_RETENTION_DAYS:-30}
+      YOLO_CONFIG_DIR: /data/ultralytics
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:?Set DASHBOARD_USERNAME in .env}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?Set a strong DASHBOARD_PASSWORD in .env}
+    volumes:
+      - ../cameras.yaml:/app/cameras.yaml:ro
+      - camera_data:/data
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2)"]
+      interval: 30s
+      timeout: 4s
+      retries: 3
+      start_period: 60s
+    networks:
+      - private
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      CADDY_DOMAIN: ${CADDY_DOMAIN:?Set CADDY_DOMAIN in .env}
+    depends_on:
+      camera-app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - private
+
+  # Optional NVIDIA Body Pose NIM. Requires Linux, NVIDIA Container Toolkit,
+  # a supported GPU (compute capability >= 8.0), and NGC_API_KEY.
+  nim-cache-init:
+    image: alpine:3.21
+    profiles: ["nvidia"]
+    user: "0:0"
+    command: ["sh", "-c", "chown -R 1000:1000 /cache"]
+    volumes:
+      - nim_cache:/cache
+    networks: []
+
+  body-pose-nim:
+    image: nvcr.io/nim/nvidia/body-pose:1.0.0
+    profiles: ["nvidia"]
+    restart: unless-stopped
+    depends_on:
+      nim-cache-init:
+        condition: service_completed_successfully
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY:-}
+      NIM_HTTP_API_PORT: 8000
+      NIM_GRPC_API_PORT: 8001
+      NV_AI4M_MAX_CONCURRENCY_PER_GPU: ${NIM_CONCURRENCY:-1}
+    gpus: all
+    shm_size: 8gb
+    ports:
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - nim_cache:/opt/nim/.cache
+    networks:
+      - private
+
+volumes:
+  camera_data:
+  caddy_data:
+  caddy_config:
+  nim_cache:
+
+networks:
+  private:

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+.env
+*.pt
+captures/
+recordings/
+*.mp4
+*.json
+nim-clients/
+nvidia-results/
+events/
+.DS_Store
+.env.cameras
+!.env.cameras.example
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
