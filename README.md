@@ -14,6 +14,8 @@ The official NVIDIA Build page is [NVIDIA 3D Body Pose API](https://build.nvidia
 
 ## macOS setup
 
+Для пошагового запуска из GitHub на Mac см. [инструкцию на русском](INSTALL_MAC_RU.md).
+
 1. Install Python 3.10+ and a recent FFmpeg (Homebrew: `brew install ffmpeg`).
 2. In this folder, create and activate a virtual environment:
 
